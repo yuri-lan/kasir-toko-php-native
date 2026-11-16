@@ -33,7 +33,7 @@ Sebelum menjalankan aplikasi ini, pastikan Anda sudah menginstal:
 
 1. Clone repository ini ke dalam folder `htdocs` XAMPP Anda atau download sebagai ZIP.
    ```bash
-   git clone https://github.com/username/kasir-toko-php.git
+   git clone https://github.com/yuri-lan/kasir-toko-php-native.git
    ```
 2. Buka phpMyAdmin dan buat database baru dengan nama `db_toko`.
 3. Import file `db_toko.sql` (ada di dalam folder project) ke dalam database `db_toko`.
@@ -81,6 +81,3 @@ kasir_toko/
 ## Lisensi
 
 Proyek ini dibuat untuk keperluan tugas akademik. Silakan digunakan dan dikembangkan sesuai kebutuhan.
-```
-
----
