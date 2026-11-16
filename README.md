@@ -1,5 +1,3 @@
-Siap babeeee! Ini dia **FULL CODE `README.md`** yang super lengkap, rapi, tanpa emoji, dan udah ada struktur foldernya. Kamu tinggal *copy* semua teks di dalam kotak kode di bawah ini, lalu *paste* ke file `README.md` di folder proyek kamu.
-
 ```markdown
 # Sistem Kasir Toko (PHP Native)
 
@@ -86,5 +84,3 @@ Proyek ini dibuat untuk keperluan tugas akademik. Silakan digunakan dan dikemban
 ```
 
 ---
-
-Tinggal *copy* aja semua teks di atas ke `README.md`. Kalau udah, langsung gas ke GitHub! 🚀
