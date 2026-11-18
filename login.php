@@ -3,7 +3,11 @@ session_start();
 require 'koneksi.php';
 
 if (isset($_SESSION['id_user'])) {
-    header("Location: dashboard.php");
+    if (isset($_SESSION['role']) && $_SESSION['role'] == 'pelanggan') {
+        header("Location: riwayat_pelanggan.php");
+    } else {
+        header("Location: dashboard.php");
+    }
     exit;
 }
 
@@ -24,7 +28,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_SESSION['username'] = $user['username'];
         $_SESSION['nama_lengkap'] = $user['nama_lengkap'];
         $_SESSION['role'] = $user['role'];
-        header("Location: dashboard.php");
+        $_SESSION['id_pelanggan'] = $user['id_pelanggan']; // Penting untuk relasi data belanjaan pelanggan
+
+        // Pengalihan halaman berdasarkan role
+        if ($user['role'] == 'pelanggan') {
+            header("Location: riwayat_pelanggan.php");
+        } else {
+            header("Location: dashboard.php");
+        }
         exit;
     } else {
         $error = "Username atau Password salah!";
@@ -78,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </head>
 <body>
     <div class="card">
-        <h2>Login Kasir</h2>
+        <h2>Login Akun</h2>
         <?php if ($error): ?>
             <div class="alert"><?= $error ?></div>
         <?php endif; ?>

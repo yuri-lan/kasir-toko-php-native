@@ -1,6 +1,8 @@
 <?php
 session_start();
 require 'koneksi.php';
+require 'auth.php';
+wajib_admin();
 
 if (!isset($_SESSION['id_user'])) {
     header("Location: login.php");

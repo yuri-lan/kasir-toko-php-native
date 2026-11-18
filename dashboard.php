@@ -15,8 +15,8 @@ $bulan_ini = date('m');
 $tahun_ini = date('Y');
 
 // 1. Data Statistik Utama
-$pendapatan_hari_ini = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT SUM(total_belanja) as total FROM tbl_transaksi WHERE tanggal = '$tgl_hari_ini'"))['total'] ?? 0;
-$trx_hari_ini = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(*) as jml FROM tbl_transaksi WHERE tanggal = '$tgl_hari_ini'"))['jml'];
+$pendapatan_hari_ini = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT SUM(total_belanja) as total FROM tbl_transaksi WHERE DATE(tanggal) = '$tgl_hari_ini'"))['total'] ?? 0;
+$trx_hari_ini = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(*) as jml FROM tbl_transaksi WHERE DATE(tanggal) = '$tgl_hari_ini'"))['jml'];
 $total_produk = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(*) as jml FROM tbl_produk"))['jml'];
 $total_pelanggan = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(*) as jml FROM tbl_pelanggan"))['jml'];
 

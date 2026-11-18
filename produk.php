@@ -1,44 +1,80 @@
 <?php
 session_start();
 require 'koneksi.php';
+require 'auth.php';
+wajib_admin();
+mysqli_report(MYSQLI_REPORT_OFF); // biar error foreign key nggak bikin crash, dicek manual
 
 if (!isset($_SESSION['id_user'])) {
     header("Location: login.php");
     exit;
 }
 
-// Proses Tambah Barang
 $pesan = '';
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah'])) {
-    $id_kategori = $_POST['id_kategori'];
-    $nama_produk = $_POST['nama_produk'];
-    $harga = $_POST['harga'];
-    $stok = $_POST['stok'];
 
-    $query = "INSERT INTO tbl_produk (id_kategori, nama_produk, harga, stok) VALUES (?, ?, ?, ?)";
-    $stmt = mysqli_prepare($koneksi, $query);
-    mysqli_stmt_bind_param($stmt, "isdi", $id_kategori, $nama_produk, $harga, $stok);
-    
-    if (mysqli_stmt_execute($stmt)) {
-        $pesan = "Barang berhasil ditambahkan!";
+// ---------- TAMBAH ----------
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah'])) {
+    $id_kategori = (int)$_POST['id_kategori'];
+    $nama_produk = trim($_POST['nama_produk']);
+    $harga       = (float)$_POST['harga'];
+    $stok        = (int)$_POST['stok'];
+
+    if ($nama_produk === '' || $harga < 0 || $stok < 0) {
+        $pesan = "Data tidak valid, cek lagi ya.";
     } else {
-        $pesan = "Gagal menambahkan barang.";
+        $stmt = mysqli_prepare($koneksi, "INSERT INTO tbl_produk (id_kategori, nama_produk, harga, stok) VALUES (?, ?, ?, ?)");
+        mysqli_stmt_bind_param($stmt, "isdi", $id_kategori, $nama_produk, $harga, $stok);
+        $pesan = mysqli_stmt_execute($stmt) ? "Barang berhasil ditambahkan!" : "Gagal menambahkan barang.";
     }
 }
 
-// Proses Hapus Barang
+// ---------- UBAH ----------
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ubah'])) {
+    $id_produk   = (int)$_POST['id_produk'];
+    $id_kategori = (int)$_POST['id_kategori'];
+    $nama_produk = trim($_POST['nama_produk']);
+    $harga       = (float)$_POST['harga'];
+    $stok        = (int)$_POST['stok'];
+
+    if ($nama_produk === '' || $harga < 0 || $stok < 0) {
+        $pesan = "Data tidak valid, cek lagi ya.";
+    } else {
+        $stmt = mysqli_prepare($koneksi, "UPDATE tbl_produk SET id_kategori = ?, nama_produk = ?, harga = ?, stok = ? WHERE id_produk = ?");
+        mysqli_stmt_bind_param($stmt, "isdii", $id_kategori, $nama_produk, $harga, $stok, $id_produk);
+        if (mysqli_stmt_execute($stmt)) {
+            header("Location: produk.php?status=ubah");
+            exit;
+        }
+        $pesan = "Gagal menyimpan perubahan.";
+    }
+}
+
+// ---------- HAPUS ----------
 if (isset($_GET['hapus'])) {
-    $id_hapus = $_GET['hapus'];
-    // Hapus dari tabel (karena ada foreign key, pastikan barang belum pernah ditransaksikan. Kalau pernah, ini bakal error)
-    mysqli_query($koneksi, "DELETE FROM tbl_produk WHERE id_produk = '$id_hapus'");
-    header("Location: produk.php?status=hapus");
+    $id_hapus = (int)$_GET['hapus'];
+    $stmt = mysqli_prepare($koneksi, "DELETE FROM tbl_produk WHERE id_produk = ?");
+    mysqli_stmt_bind_param($stmt, "i", $id_hapus);
+
+    // kalau produk sudah pernah dijual, foreign key bakal nolak -> execute false
+    if (mysqli_stmt_execute($stmt)) {
+        header("Location: produk.php?status=hapus");
+    } else {
+        header("Location: produk.php?status=gagal_hapus");
+    }
     exit;
 }
 
-// Ambil data kategori buat dropdown
-$kategori = mysqli_query($koneksi, "SELECT * FROM tbl_kategori ORDER BY nama_kategori ASC");
+// ---------- MODE EDIT (isi form dari data lama) ----------
+$edit = null;
+if (isset($_GET['edit'])) {
+    $id_edit = (int)$_GET['edit'];
+    $stmt = mysqli_prepare($koneksi, "SELECT * FROM tbl_produk WHERE id_produk = ?");
+    mysqli_stmt_bind_param($stmt, "i", $id_edit);
+    mysqli_stmt_execute($stmt);
+    $edit = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+}
 
-// Ambil data produk buat tabel
+$kategori = mysqli_query($koneksi, "SELECT * FROM tbl_kategori ORDER BY nama_kategori ASC");
 $produk = mysqli_query($koneksi, "SELECT p.*, k.nama_kategori FROM tbl_produk p JOIN tbl_kategori k ON p.id_kategori = k.id_kategori ORDER BY p.id_produk DESC");
 ?>
 
@@ -73,14 +109,14 @@ $produk = mysqli_query($koneksi, "SELECT p.*, k.nama_kategori FROM tbl_produk p 
         .main-content { margin-left: 260px; padding: 30px 40px; width: calc(100% - 260px);}
         .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .topbar h1 { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--maroon); }
-        
+
         /* Grid Layout: Kiri Form (Kecil), Kanan Tabel (Besar) */
         .produk-container { display: grid; grid-template-columns: 350px 1fr; gap: 30px; align-items: start;}
-        
+
         /* Card Style */
         .card { background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 8px 25px rgba(107, 29, 47, 0.05); border: 1px solid #EBE2D3;}
         .card h2 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 20px; color: var(--maroon); border-bottom: 2px solid var(--cream-card); padding-bottom: 12px; }
-        
+
         /* Form Style */
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 8px; font-size: 13px; color: var(--maroon); font-weight: 600;}
@@ -93,22 +129,29 @@ $produk = mysqli_query($koneksi, "SELECT p.*, k.nama_kategori FROM tbl_produk p 
         .btn-tambah:hover { background: var(--maroon-dark); transform: translateY(-2px);}
 
         .alert { background: #F0FDF4; border: 1px solid #BBF7D0; color: #166534; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 500; font-size: 14px;}
-        
+
         /* Tabel */
         table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
         th, td { padding: 15px 10px; text-align: left; border-bottom: 1px solid var(--cream-card); font-size: 14px;}
         th { color: var(--maroon); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; background: var(--cream);}
         tr:hover { background: #fafafa; }
-        
+
         .td-harga { font-weight: 700; color: var(--maroon); }
         .badge-stok { background: #F6F0E4; color: var(--gold-hover); padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;}
-        
-        .btn-hapus { 
-            background: #FDF2F2; color: #9B1C1C; border: 1px solid #F8B4B4; padding: 6px 12px; border-radius: 6px; 
+
+        .btn-hapus {
+            background: #FDF2F2; color: #9B1C1C; border: 1px solid #F8B4B4; padding: 6px 12px; border-radius: 6px;
             cursor: pointer; font-size: 12px; font-weight: 600; transition: 0.2s; text-decoration: none; display: inline-block;
         }
         .btn-hapus:hover { background: #9B1C1C; color: #fff; }
-        
+
+        .btn-edit {
+            background: #F6F0E4; color: var(--maroon); border: 1px solid #DCD3C6; padding: 6px 12px; border-radius: 6px;
+            font-size: 12px; font-weight: 600; transition: 0.2s; text-decoration: none; display: inline-block; margin-right: 5px;
+        }
+        .btn-edit:hover { background: var(--maroon); color: #fff; }
+        .btn-batal { display: block; text-align: center; margin-top: 10px; color: #888; font-size: 13px; text-decoration: none; }
+        .btn-batal:hover { color: var(--maroon); }
     </style>
 </head>
 <body>
@@ -121,42 +164,63 @@ $produk = mysqli_query($koneksi, "SELECT p.*, k.nama_kategori FROM tbl_produk p 
         </div>
 
         <div class="produk-container">
-            
-            <!-- KIRI: FORM TAMBAH BARANG -->
+
+            <!-- KIRI: FORM TAMBAH / EDIT BARANG -->
             <div class="card">
-                <h2>Tambah Barang Baru</h2>
-                
+                <h2><?= $edit ? 'Edit Barang' : 'Tambah Barang Baru' ?></h2>
+
+                <?php $status = $_GET['status'] ?? ''; ?>
                 <?php if($pesan): ?>
-                    <div class="alert"><?= $pesan ?></div>
+                    <div class="alert"><?= htmlspecialchars($pesan) ?></div>
                 <?php endif; ?>
-                <?php if(isset($_GET['status']) && $_GET['status'] == 'hapus'): ?>
+                <?php if($status == 'ubah'): ?>
+                    <div class="alert">Perubahan berhasil disimpan!</div>
+                <?php endif; ?>
+                <?php if($status == 'hapus'): ?>
                     <div class="alert" style="background:#FDF2F2; border-color:#F8B4B4; color:#9B1C1C;">Barang berhasil dihapus!</div>
                 <?php endif; ?>
+                <?php if($status == 'gagal_hapus'): ?>
+                    <div class="alert" style="background:#FDF2F2; border-color:#F8B4B4; color:#9B1C1C;">Barang nggak bisa dihapus karena sudah pernah ada di transaksi.</div>
+                <?php endif; ?>
 
-                <form method="POST">
+                <form method="POST" action="produk.php">
+                    <?php if($edit): ?>
+                        <input type="hidden" name="id_produk" value="<?= $edit['id_produk'] ?>">
+                    <?php endif; ?>
+
                     <div class="form-group">
                         <label>Nama Produk</label>
-                        <input type="text" name="nama_produk" required placeholder="Contoh: Kopi Susu">
+                        <input type="text" name="nama_produk" required placeholder="Contoh: Kopi Susu"
+                               value="<?= $edit ? htmlspecialchars($edit['nama_produk']) : '' ?>">
                     </div>
                     <div class="form-group">
                         <label>Kategori</label>
                         <select name="id_kategori" required>
                             <option value="">-- Pilih Kategori --</option>
                             <?php while($k = mysqli_fetch_assoc($kategori)): ?>
-                                <option value="<?= $k['id_kategori'] ?>"><?= $k['nama_kategori'] ?></option>
+                                <option value="<?= $k['id_kategori'] ?>" <?= ($edit && $edit['id_kategori'] == $k['id_kategori']) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($k['nama_kategori']) ?>
+                                </option>
                             <?php endwhile; ?>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Harga (Rp)</label>
-                        <input type="number" name="harga" required placeholder="Contoh: 15000" min="0">
+                        <input type="number" name="harga" required placeholder="Contoh: 15000" min="0"
+                               value="<?= $edit ? (int)$edit['harga'] : '' ?>">
                     </div>
                     <div class="form-group">
-                        <label>Stok Awal</label>
-                        <input type="number" name="stok" required placeholder="Contoh: 50" min="0">
+                        <label><?= $edit ? 'Stok' : 'Stok Awal' ?></label>
+                        <input type="number" name="stok" required placeholder="Contoh: 50" min="0"
+                               value="<?= $edit ? $edit['stok'] : '' ?>">
                     </div>
-                    
-                    <button type="submit" name="tambah" class="btn-tambah">Simpan Barang</button>
+
+                    <button type="submit" name="<?= $edit ? 'ubah' : 'tambah' ?>" class="btn-tambah">
+                        <?= $edit ? 'Simpan Perubahan' : 'Simpan Barang' ?>
+                    </button>
+                    <?php if($edit): ?>
+                        <a href="produk.php" class="btn-batal">Batal edit</a>
+                    <?php endif; ?>
                 </form>
             </div>
 
@@ -179,12 +243,12 @@ $produk = mysqli_query($koneksi, "SELECT p.*, k.nama_kategori FROM tbl_produk p 
                             <?php while($p = mysqli_fetch_assoc($produk)): ?>
                             <tr>
                                 <td>#<?= $p['id_produk'] ?></td>
-                                <td style="font-weight: 600; color: var(--text-dark);"><?= $p['nama_produk'] ?></td>
-                                <td><?= $p['nama_kategori'] ?></td>
+                                <td style="font-weight: 600; color: var(--text-dark);"><?= htmlspecialchars($p['nama_produk']) ?></td>
+                                <td><?= htmlspecialchars($p['nama_kategori']) ?></td>
                                 <td class="td-harga">Rp <?= number_format($p['harga'], 0, ',', '.') ?></td>
                                 <td><span class="badge-stok"><?= $p['stok'] ?> Pcs</span></td>
                                 <td>
-                                    <!-- Tombol hapus dengan konfirmasi JS -->
+                                    <a href="produk.php?edit=<?= $p['id_produk'] ?>" class="btn-edit">Edit</a>
                                     <a href="produk.php?hapus=<?= $p['id_produk'] ?>" class="btn-hapus" onclick="return confirm('Yakin mau hapus produk ini?')">Hapus</a>
                                 </td>
                             </tr>
