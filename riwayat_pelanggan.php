@@ -106,60 +106,61 @@ $jumlah_belanja = $q_total['total'] ?? 0;
                 <a href="katalog_pelanggan.php" class="btn-gold">+ Belanja Produk Baru</a>
             </div>
             <table>
-    <thead>
-        <tr>
-            <th>ID Order</th>
-            <th>Tanggal</th>
-            <th>Total Belanja</th>
-            <th>Status Pembayaran</th>
-            <th>Status Belanja / Pengiriman</th>
-            <th>Aksi</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php if ($total_transaksi > 0): ?>
-            <?php while ($row = mysqli_fetch_assoc($query_trx)): ?>
-            <tr>
-                <td><span class="badge">#<?= $row['id_transaksi'] ?></span></td>
-                <td><?= date('d-m-Y H:i', strtotime($row['tanggal'])) ?></td>
-                <td class="td-harga">Rp <?= number_format($row['total_belanja'], 0, ',', '.') ?></td>
-                
-                <!-- Status Bayar -->
-                <td>
-                    <span style="padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; background:<?= ($row['status_bayar'] == 'Lunas') ? '#DCFCE7; color:#166534;' : '#FEE2E2; color:#991B1B;' ?>">
-                        <?= $row['status_bayar'] ?>
-                    </span>
-                </td>
+                <thead>
+                    <tr>
+                        <th>ID Order</th>
+                        <th>Tanggal</th>
+                        <th>Total Belanja</th>
+                        <th>Status Pembayaran</th>
+                        <th>Status Belanja / Pengiriman</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($total_transaksi > 0): ?>
+                        <?php while ($row = mysqli_fetch_assoc($query_trx)): ?>
+                        <?php $is_lunas = (strtolower(trim($row['status_bayar'] ?? '')) === 'lunas'); ?>
+                        <tr>
+                            <td><span class="badge">#<?= $row['id_transaksi'] ?></span></td>
+                            <td><?= date('d-m-Y H:i', strtotime($row['tanggal'])) ?></td>
+                            <td class="td-harga">Rp <?= number_format($row['total_belanja'], 0, ',', '.') ?></td>
+                            
+                            <!-- Status Bayar -->
+                            <td>
+                                <span style="padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; background:<?= $is_lunas ? '#DCFCE7; color:#166534;' : '#FEE2E2; color:#991B1B;' ?>">
+                                    <?= htmlspecialchars($row['status_bayar']) ?>
+                                </span>
+                            </td>
 
-                <!-- Status Pengiriman / Belanja -->
-                <td>
-                    <?php 
-                        $status = $row['status_pengiriman'];
-                        $bg = '#F3F4F6'; $color = '#374151';
-                        if ($status == 'Proses Packing') { $bg = '#FEF3C7'; $color = '#92400E'; }
-                        else if ($status == 'Sudah Diantar') { $bg = '#DCFCE7'; $color = '#166534'; }
-                        else if ($status == 'Menunggu Pembayaran') { $bg = '#FEE2E2'; $color = '#991B1B'; }
-                    ?>
-                    <span style="padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; background:<?= $bg ?>; color:<?= $color ?>;">
-                        <?= htmlspecialchars($status) ?>
-                    </span>
-                </td>
+                            <!-- Status Pengiriman / Belanja -->
+                            <td>
+                                <?php 
+                                    $status = $row['status_pengiriman'];
+                                    $bg = '#F3F4F6'; $color = '#374151';
+                                    if ($status == 'Proses Packing') { $bg = '#FEF3C7'; $color = '#92400E'; }
+                                    else if ($status == 'Sudah Diantar' || $status == 'Selesai') { $bg = '#DCFCE7'; $color = '#166534'; }
+                                    else if ($status == 'Menunggu Pembayaran') { $bg = '#FEE2E2'; $color = '#991B1B'; }
+                                ?>
+                                <span style="padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; background:<?= $bg ?>; color:<?= $color ?>;">
+                                    <?= htmlspecialchars($status) ?>
+                                </span>
+                            </td>
 
-                <!-- Aksi -->
-                <td>
-                    <?php if ($row['status_bayar'] == 'Belum Lunas'): ?>
-                        <a href="bayar_transfer.php?id=<?= $row['id_transaksi'] ?>" style="background:var(--maroon); color:#fff; padding:5px 10px; border-radius:6px; text-decoration:none; font-size:12px;">Bayar Transfer</a>
+                            <!-- Aksi -->
+                            <td>
+                                <?php if (!$is_lunas): ?>
+                                    <a href="bayar_duitku.php?id=<?= $row['id_transaksi'] ?>" style="background:var(--maroon); color:#fff; padding:5px 10px; border-radius:6px; text-decoration:none; font-size:12px;">Bayar Sekarang</a>
+                                <?php else: ?>
+                                    <a href="struk.php?id=<?= $row['id_transaksi'] ?>" style="background:var(--gold); color:#fff; padding:5px 10px; border-radius:6px; text-decoration:none; font-size:12px;">Lihat Struk</a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
                     <?php else: ?>
-                        <a href="struk.php?id=<?= $row['id_transaksi'] ?>" style="background:var(--gold); color:#fff; padding:5px 10px; border-radius:6px; text-decoration:none; font-size:12px;">Lihat Struk</a>
+                        <tr><td colspan="6" style="text-align:center; padding:20px; color:#888;">Belum ada riwayat transaksi.</td></tr>
                     <?php endif; ?>
-                </td>
-            </tr>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <tr><td colspan="6" style="text-align:center; padding:20px; color:#888;">Belum ada riwayat transaksi.</td></tr>
-        <?php endif; ?>
-    </tbody>
-</table>
+                </tbody>
+            </table>
         </div>
     </div>
 </body>

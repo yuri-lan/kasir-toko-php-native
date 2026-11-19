@@ -41,7 +41,7 @@ $pernah_utang = in_array($metode, ['Utang', 'Utang (Lunas)']);
 $cicilan = [];
 $total_cicilan = 0;
 if ($pernah_utang) {
-    $stmt_c = mysqli_prepare($koneksi, "SELECT nominal, waktu FROM tbl_pelunasan WHERE id_transaksi = ? ORDER BY id_pelanggan ASC");
+    $stmt_c = mysqli_prepare($koneksi, "SELECT nominal, waktu FROM tbl_pelunasan WHERE id_transaksi = ? ORDER BY id_pelunasan ASC");
     mysqli_stmt_bind_param($stmt_c, "i", $id_transaksi);
     mysqli_stmt_execute($stmt_c);
     $res_c = mysqli_stmt_get_result($stmt_c);

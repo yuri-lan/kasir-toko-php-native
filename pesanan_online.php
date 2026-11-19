@@ -15,7 +15,11 @@ if (isset($_POST['update_status'])) {
     exit;
 }
 
-$pesanan = mysqli_query($koneksi, "SELECT t.*, p.nama_pelanggan, p.kota FROM tbl_transaksi t JOIN tbl_pelanggan p ON t.id_pelanggan = p.id_pelanggan WHERE t.metode_pembayaran = 'Transfer' ORDER BY t.id_transaksi DESC");
+$pesanan = mysqli_query($koneksi, "SELECT t.*, p.nama_pelanggan, p.kota 
+    FROM tbl_transaksi t 
+    JOIN tbl_pelanggan p ON t.id_pelanggan = p.id_pelanggan 
+    WHERE (t.metode_pembayaran = 'Transfer' OR t.metode_pembayaran LIKE 'Duitku%') 
+    ORDER BY t.id_transaksi DESC");
 ?>
 
 <!DOCTYPE html>

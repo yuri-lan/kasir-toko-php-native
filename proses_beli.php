@@ -37,8 +37,8 @@ if (isset($_POST['checkout_sekarang']) && !empty($_SESSION['keranjang'])) {
         }
 
         unset($_SESSION['keranjang']);
-        header("Location: bayar_transfer.php?id=$id_transaksi_baru");
-        exit;
+        header("Location: bayar_duitku.php?id=$id_transaksi_baru");
+exit;
     }
 }
 header("Location: katalog_pelanggan.php");

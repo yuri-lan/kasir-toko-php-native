@@ -2,9 +2,12 @@
 // Ngambil nama file saat ini buat nentuin menu mana yang lagi aktif
 $page = basename($_SERVER['PHP_SELF']);
 $is_admin = (($_SESSION['role'] ?? '') === 'admin');
-?>
-<?php
-$q_notif = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(*) as jml FROM tbl_transaksi WHERE metode_pembayaran = 'Transfer' AND status_bayar = 'Lunas' AND status_pengiriman != 'Sudah Diantar'"));
+
+$q_notif = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT COUNT(*) as jml 
+    FROM tbl_transaksi 
+    WHERE (metode_pembayaran = 'Transfer' OR metode_pembayaran LIKE 'Duitku%') 
+      AND status_bayar = 'Lunas' 
+      AND status_pengiriman NOT IN ('Sudah Diantar', 'Selesai')"));
 $jml_notif = $q_notif['jml'] ?? 0;
 ?>
 <div class="sidebar">
@@ -43,12 +46,12 @@ $jml_notif = $q_notif['jml'] ?? 0;
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
             Pelunasan Utang
         </a>
-<a href="pesanan_online.php" class="menu-item">
-    <span>Pesanan Online</span>
-    <?php if($jml_notif > 0): ?>
-        <span style="background:#ff4757; color:#fff; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:bold; margin-left:auto;"><?= $jml_notif ?></span>
-    <?php endif; ?>
-</a>
+        <a href="pesanan_online.php" class="menu-item <?= ($page == 'pesanan_online.php') ? 'active' : '' ?>">
+            <span>Pesanan Online</span>
+            <?php if($jml_notif > 0): ?>
+                <span style="background:#ff4757; color:#fff; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:bold; margin-left:auto;"><?= $jml_notif ?></span>
+            <?php endif; ?>
+        </a>
         <p class="menu-label" style="margin-top: 30px;">Lainnya</p>
         <a href="logout.php" class="menu-item logout">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
